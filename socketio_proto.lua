@@ -45,7 +45,7 @@ SOCKET_IO_TYPE_MAP[SOCKET_IO_TYPE_BINARY_ACK]="BINARY ACK"
 local function process_socket_io_packet(tree, socket_io_packet, is_binary)
     local socket_io_tree=tree:add("Socket.IO")
     if is_binary then
-        socket_io_tree:add("binary packet",socket_io_packet:tohex())
+        socket_io_tree:add("binary packet:",socket_io_packet:tohex())
         return
     end
     local i = 0
@@ -109,18 +109,18 @@ local function process_socket_io_packet(tree, socket_io_packet, is_binary)
             socket_io_packet:len() - i
         )
     end
-    socket_io_tree:add("type", packet.type)
+    socket_io_tree:add("type:", SOCKET_IO_TYPE_MAP[packet.type])
     if packet.attachments ~= nil then
-        socket_io_tree:add("attachments",packet.attachments)
+        socket_io_tree:add("attachments:",packet.attachments)
     end
     if packet.nsp ~= nil then
-        socket_io_tree:add("nsp", packet.nsp)
+        socket_io_tree:add("nsp:", packet.nsp)
     end
     if packet.id ~= nil then
-        socket_io_tree:add("id", packet.id)
+        socket_io_tree:add("id:", packet.id)
     end
     if packet.data ~= nil then
-        socket_io_tree:add("data", packet.data:raw())
+        socket_io_tree:add("data:", packet.data:raw())
     end
 end
 
@@ -162,12 +162,12 @@ local function process_engine_io_packet(tree, engine_io_packet, process_payload)
         packet.decoded_data = packet.data:base64_decode()
     end
 
-    engine_io_tree:add("type",packet.type)
+    engine_io_tree:add("type:",ENGINE_IO_TYPE_MAP[packet.type])
     if packet.data ~= nil then
-        engine_io_tree:add("data",packet.data:raw())
+        engine_io_tree:add("data:",packet.data:raw())
     end
     if packet.decoded_data ~= nil then
-        engine_io_tree:add("decoded data",packet.data:hex())
+        engine_io_tree:add("decoded data:",packet.data:hex())
     end
 
     if packet.type == ENGINE_IO_TYPE_MESSAGE then
