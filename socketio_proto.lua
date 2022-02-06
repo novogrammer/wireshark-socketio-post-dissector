@@ -1,3 +1,4 @@
+-- https://github.com/novogrammer/wireshark-socketio-post-dissector
 
 -- see
 -- https://github.com/socketio/engine.io-protocol/
