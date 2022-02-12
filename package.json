@@ -1,0 +1,26 @@
+{
+  "name": "wireshark-socketio-post-dissector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test-scenario-socketio": "ts-node ./tools/test-scenario-socketio.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novogrammer/wireshark-socketio-post-dissector.git"
+  },
+  "keywords": [],
+  "author": "Yusuke Kawamoto <novogrammer@gmail.com> (https://github.com/novogrammer/)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/novogrammer/wireshark-socketio-post-dissector/issues"
+  },
+  "homepage": "https://github.com/novogrammer/wireshark-socketio-post-dissector#readme",
+  "devDependencies": {
+    "socket.io": "^4.4.1",
+    "socket.io-client": "^4.4.1",
+    "ts-node": "^10.5.0",
+    "typescript": "^4.5.5"
+  }
+}
