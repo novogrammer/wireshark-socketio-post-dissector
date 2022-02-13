@@ -54,7 +54,6 @@ local function process_socket_io_packet(tree, socket_io_packet, is_binary)
         type = socket_io_packet:subset(0, 1):raw(),
         data = nil
     }
-    i = i + 1
     if not SOCKET_IO_TYPE_MAP[packet.type] then
         error("unknown packet type")
     end
@@ -86,7 +85,7 @@ local function process_socket_io_packet(tree, socket_io_packet, is_binary)
     else
         packet.nsp = SOCKET_IO_BEGIN_OF_NAMESPACE
     end
-    if i ~= socket_io_packet:len() then
+    if i + 1 ~= socket_io_packet:len() then
         local next = socket_io_packet:subset(i + 1, 1):raw()
         if next == tostring(tonumber(next)) then
             local start = i + 1
@@ -104,7 +103,8 @@ local function process_socket_io_packet(tree, socket_io_packet, is_binary)
             packet.id = tonumber(socket_io_packet:subset(start, i - start):raw())
         end
     end
-    if i ~= socket_io_packet:len() then
+    if i + 1 ~= socket_io_packet:len() then
+        i = i + 1
         packet.data = socket_io_packet:subset(
             i,
             socket_io_packet:len() - i
