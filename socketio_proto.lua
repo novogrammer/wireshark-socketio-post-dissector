@@ -100,7 +100,7 @@ local function process_socket_io_packet(tree, socket_io_packet, is_binary)
                     break
                 end
             end
-            packet.id = tonumber(socket_io_packet:subset(start, i - start):raw())
+            packet.id = tonumber(socket_io_packet:subset(start, i - start + 1):raw())
         end
     end
     if i + 1 ~= socket_io_packet:len() then
