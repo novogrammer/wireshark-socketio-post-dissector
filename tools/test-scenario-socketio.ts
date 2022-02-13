@@ -21,7 +21,7 @@ async function mainAsync() {
   await new Promise<void>((resolve,reject)=>{
     clientSocket.on("connect",()=>{
       console.log("connect");
-      resolve();
+      setTimeout(resolve,500);
     })
   });
   clientSocket.close();
