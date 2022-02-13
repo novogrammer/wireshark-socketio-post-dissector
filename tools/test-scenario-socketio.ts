@@ -46,6 +46,11 @@ async function mainAsync() {
   clientSocket.emit("callback me","world",(data:string)=>{
     console.log(`callbacked: ${data}`);
   });
+  console.log("sending some binary");
+  const sendingData=Uint8Array.from([0,1,2]);
+  clientSocket.emit("some binary",{
+    sendingData,
+  });
   await new Promise<void>((resolve,reject)=>{
     console.log("waiting some events");
     setTimeout(resolve,1000);

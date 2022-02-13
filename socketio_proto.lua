@@ -145,8 +145,13 @@ ENGINE_IO_TYPE_MAP[ENGINE_IO_TYPE_NOOP]="noop"
 ENGINE_IO_TYPE_MAP[ENGINE_IO_TYPE_BINARY_MESSAGE]="binary message"
 
 
-local function process_engine_io_packet(tree, engine_io_packet, process_payload)
+local function process_engine_io_packet(tree, engine_io_packet,is_binary ,process_payload)
     local engine_io_tree=tree:add("Engine.IO")
+    if is_binary then
+        engine_io_tree:add("binary message:",engine_io_packet:tohex())
+        process_payload(tree, engine_io_packet, true)
+        return
+    end
     local packet = {
         type = engine_io_packet:subset(0, 1):raw(),
     }
@@ -184,6 +189,7 @@ end
 
 websocket = Field.new("websocket")
 websocket_payload = Field.new("data-text-lines")
+websocket_binary_payload = Field.new("data")
 
 socketio_proto = Proto("socketio", "Socket.IO and Engine.IO PostDissector")
 
@@ -197,20 +203,27 @@ function socketio_proto.dissector(buffer, pinfo, tree)
         return
     end
 
+    local websocket_binary_payload = websocket_binary_payload();
+
     local websocket_payload = websocket_payload()
-    if not websocket_payload then
+    if not websocket_payload and not websocket_binary_payload then
         return
     end
     local proto_tree=tree:add(socketio_proto);
     
-    local engine_io_packet_list=separate_byte_array(websocket_payload.value,ENGINE_IO_PAYLOAD_SEPARATOR);
-    do
-        local i
-        for i = 1,#engine_io_packet_list do
-            local engine_io_packet=engine_io_packet_list[i]
-            process_engine_io_packet(proto_tree, engine_io_packet,process_socket_io_packet)
+    if websocket_payload then
+        local engine_io_packet_list=separate_byte_array(websocket_payload.value,ENGINE_IO_PAYLOAD_SEPARATOR);
+        do
+            local i
+            for i = 1,#engine_io_packet_list do
+                local engine_io_packet=engine_io_packet_list[i]
+                process_engine_io_packet(proto_tree, engine_io_packet,false,process_socket_io_packet)
 
+            end
         end
+    elseif websocket_binary_payload then
+        local engine_io_packet=websocket_binary_payload.value
+        process_engine_io_packet(proto_tree, engine_io_packet,true,process_socket_io_packet)
     end
 end
 
