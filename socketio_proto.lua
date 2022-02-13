@@ -188,8 +188,8 @@ end
 
 
 websocket = Field.new("websocket")
-websocket_payload = Field.new("data-text-lines")
-websocket_binary_payload = Field.new("data")
+text_payload = Field.new("data-text-lines")
+binary_payload = Field.new("data")
 
 socketio_proto = Proto("socketio", "Socket.IO and Engine.IO PostDissector")
 
@@ -203,16 +203,16 @@ function socketio_proto.dissector(buffer, pinfo, tree)
         return
     end
 
-    local websocket_binary_payload = websocket_binary_payload();
+    local binary_payload = binary_payload();
 
-    local websocket_payload = websocket_payload()
-    if not websocket_payload and not websocket_binary_payload then
+    local text_payload = text_payload()
+    if not text_payload and not binary_payload then
         return
     end
     local proto_tree=tree:add(socketio_proto);
     
-    if websocket_payload then
-        local engine_io_packet_list=separate_byte_array(websocket_payload.value,ENGINE_IO_PAYLOAD_SEPARATOR);
+    if text_payload then
+        local engine_io_packet_list=separate_byte_array(text_payload.value,ENGINE_IO_PAYLOAD_SEPARATOR);
         do
             local i
             for i = 1,#engine_io_packet_list do
@@ -221,8 +221,8 @@ function socketio_proto.dissector(buffer, pinfo, tree)
 
             end
         end
-    elseif websocket_binary_payload then
-        local engine_io_packet=websocket_binary_payload.value
+    elseif binary_payload then
+        local engine_io_packet=binary_payload.value
         process_engine_io_packet(proto_tree, engine_io_packet,true,process_socket_io_packet)
     end
 end
