@@ -63,6 +63,7 @@ local function process_socket_io_packet(tree, socket_io_packet, is_binary)
     end
 
     if packet.type == SOCKET_IO_TYPE_BINARY_EVENT or packet.type == SOCKET_IO_TYPE_BINARY_ACK then
+        i = i + 1
         local start = i
         while socket_io_packet:subset(i, 1):raw() ~= SOCKET_IO_END_OF_BINARY_ATTACHMENT and i < socket_io_packet:len() do
             i = i + 1
