@@ -23,6 +23,10 @@ local function separate_byte_array(original, separator)
 return result
 end
 
+local function is_socket_io_polling_uri(uri)
+    return GRegex.match(uri,"\\/socket\\.io\\/.+transport\\=polling")
+end
+
 local SOCKET_IO_TYPE_CONNECT = "0"
 local SOCKET_IO_TYPE_DISCONNECT = "1"
 local SOCKET_IO_TYPE_EVENT = "2"
@@ -187,9 +191,16 @@ end
 
 
 
+http = Field.new("http")
+http_request_uri = Field.new("http.request.uri")
+http_request_method = Field.new("http.request.method")
+http_response_for_uri = Field.new("http.response_for.uri")
+http_response_line = Field.new("http.response.line")
+
 websocket = Field.new("websocket")
-text_payload = Field.new("data-text-lines")
-binary_payload = Field.new("data")
+
+field_data_text_lines = Field.new("data-text-lines")
+field_data = Field.new("data")
 
 socketio_proto = Proto("socketio", "Socket.IO and Engine.IO PostDissector")
 
@@ -199,20 +210,56 @@ end
 
 function socketio_proto.dissector(buffer, pinfo, tree)
 
-    if not websocket() then
+    local http = http()
+    local http_request_uri = http_request_uri()
+    local http_request_method = http_request_method()
+    local http_response_for_uri = http_response_for_uri()
+    local http_response_line = http_response_line()
+    local websocket = websocket()
+
+    
+    if not http and not websocket then
+        -- other protocol
         return
     end
+    if http_request_uri then
+        if not is_socket_io_polling_uri(http_request_uri.value) then
+            -- other http request
+            return
+        elseif http_request_method.value =="GET" then
+            -- skip http get request
+            return
+        end
+    end
 
-    local binary_payload = binary_payload();
+    if http_response_for_uri then
+        if not is_socket_io_polling_uri(http_response_for_uri.value) then
+            -- other http response
+            return
+        elseif GRegex.match(http_response_line(),"Content-Type: text\\/html") then
+            -- skip post response
+            return
+        end
+    end
 
-    local text_payload = text_payload()
+
+    local binary_payload
+    local text_payload
+
+    if field_data() then
+        binary_payload = field_data().value;
+    end
+    if field_data_text_lines() then
+        text_payload = field_data_text_lines().value
+    end
+
     if not text_payload and not binary_payload then
         return
     end
     local proto_tree=tree:add(socketio_proto);
     
     if text_payload then
-        local engine_io_packet_list=separate_byte_array(text_payload.value,ENGINE_IO_PAYLOAD_SEPARATOR);
+        local engine_io_packet_list=separate_byte_array(text_payload,ENGINE_IO_PAYLOAD_SEPARATOR);
         do
             local i
             for i = 1,#engine_io_packet_list do
@@ -222,7 +269,7 @@ function socketio_proto.dissector(buffer, pinfo, tree)
             end
         end
     elseif binary_payload then
-        local engine_io_packet=binary_payload.value
+        local engine_io_packet=binary_payload
         process_engine_io_packet(proto_tree, engine_io_packet,true,process_socket_io_packet)
     end
 end
