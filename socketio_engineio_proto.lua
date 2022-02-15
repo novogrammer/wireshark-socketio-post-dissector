@@ -6,19 +6,19 @@
 
 
 
-local function separate_byte_array(original, separator)
+local function separate_tvb_range(original, separator)
     local result = {}
     do
         local i = 0
         local start = 0
         while i < original:len() do
-            if original:subset(i,1):raw() == separator then
-                result[#result + 1] = original:subset(start, i - start);
+            if original:raw(i,1) == separator then
+                result[#result + 1] = original:range(start, i - start);
                 start = i + 1
             end
             i = i + 1
         end
-        result[#result + 1] = original:subset(start, i - start);
+        result[#result + 1] = original:range(start, i - start);
     end
 return result
 end
@@ -36,6 +36,7 @@ local SOCKET_IO_TYPE_BINARY_EVENT = "5"
 local SOCKET_IO_TYPE_BINARY_ACK = "6"
 local SOCKET_IO_END_OF_BINARY_ATTACHMENT = "-"
 local SOCKET_IO_BEGIN_OF_NAMESPACE = "/"
+local SOCKET_IO_NAMESPACE_MAIN = "/"
 local SOCKET_IO_END_OF_NAMESPACE = ","
 local SOCKET_IO_TYPE_MAP = {}
 
@@ -48,37 +49,37 @@ SOCKET_IO_TYPE_MAP[SOCKET_IO_TYPE_BINARY_EVENT]="BINARY EVENT"
 SOCKET_IO_TYPE_MAP[SOCKET_IO_TYPE_BINARY_ACK]="BINARY ACK"
 
 local function process_socket_io_packet(tree, socket_io_packet, is_binary)
-    local socket_io_tree=tree:add("Socket.IO")
+    local socket_io_tree=tree:add(socketio_field,socket_io_packet)
     if is_binary then
-        socket_io_tree:add("binary packet:",socket_io_packet:tohex())
+        socket_io_tree:add(socketio_binary_data_field,socket_io_packet)
         return
     end
     local i = 0
     local packet = {
-        type = socket_io_packet:subset(0, 1):raw(),
+        type = socket_io_packet:range(0, 1),
         data = nil
     }
-    if not SOCKET_IO_TYPE_MAP[packet.type] then
+    if not SOCKET_IO_TYPE_MAP[packet.type:raw()] then
         error("unknown packet type")
     end
 
-    if packet.type == SOCKET_IO_TYPE_BINARY_EVENT or packet.type == SOCKET_IO_TYPE_BINARY_ACK then
+    if packet.type:raw() == SOCKET_IO_TYPE_BINARY_EVENT or packet.type:raw() == SOCKET_IO_TYPE_BINARY_ACK then
         i = i + 1
         local start = i
-        while socket_io_packet:subset(i, 1):raw() ~= SOCKET_IO_END_OF_BINARY_ATTACHMENT and i < socket_io_packet:len() do
+        while socket_io_packet:raw(i, 1) ~= SOCKET_IO_END_OF_BINARY_ATTACHMENT and i < socket_io_packet:len() do
             i = i + 1
         end
-        local buf = socket_io_packet:subset(start, i - start):raw()
-        if socket_io_packet:subset(i, 1):raw() ~= SOCKET_IO_END_OF_BINARY_ATTACHMENT then
+        local buf = socket_io_packet:range(start, i - start)
+        if socket_io_packet:raw(i, 1) ~= SOCKET_IO_END_OF_BINARY_ATTACHMENT then
             error("SOCKET_IO_END_OF_BINARY_ATTACHMENT not found")
         end
-        packet.attachments = tonumber(buf)
+        packet.attachments = buf
     end
-    if socket_io_packet:subset(i + 1, 1):raw() == SOCKET_IO_BEGIN_OF_NAMESPACE then
+    if socket_io_packet:raw(i + 1, 1) == SOCKET_IO_BEGIN_OF_NAMESPACE then
         local start = i + 1
         while true do
             i = i + 1
-            local c = socket_io_packet:subset(i, 1):raw()
+            local c = socket_io_packet:raw(i, 1)
             if c == SOCKET_IO_END_OF_NAMESPACE then
                 break
             end
@@ -86,12 +87,10 @@ local function process_socket_io_packet(tree, socket_io_packet, is_binary)
                 break
             end
         end
-        packet.nsp = socket_io_packet:subset(start, i - start):raw()
-    else
-        packet.nsp = SOCKET_IO_BEGIN_OF_NAMESPACE
+        packet.nsp = socket_io_packet:range(start, i - start)
     end
     if i + 1 ~= socket_io_packet:len() then
-        local next = socket_io_packet:subset(i + 1, 1):raw()
+        local next = socket_io_packet:raw(i + 1, 1)
         if next == tostring(tonumber(next)) then
             local start = i + 1
             while true do
@@ -99,34 +98,36 @@ local function process_socket_io_packet(tree, socket_io_packet, is_binary)
                 if i == socket_io_packet:len() then
                     break
                 end
-                local c = socket_io_packet:subset(i, 1):raw()
+                local c = socket_io_packet:raw(i, 1)
                 if c ~= tostring(tonumber(c)) then
                     i = i - 1
                     break
                 end
             end
-            packet.id = tonumber(socket_io_packet:subset(start, i - start + 1):raw())
+            packet.id = socket_io_packet:range(start, i - start + 1)
         end
     end
     if i + 1 ~= socket_io_packet:len() then
         i = i + 1
-        packet.data = socket_io_packet:subset(
+        packet.data = socket_io_packet:range(
             i,
             socket_io_packet:len() - i
         )
     end
-    socket_io_tree:add("type:", SOCKET_IO_TYPE_MAP[packet.type])
+    socket_io_tree:add(socketio_type_field,packet.type, SOCKET_IO_TYPE_MAP[packet.type:raw()])
     if packet.attachments ~= nil then
-        socket_io_tree:add("attachments:",packet.attachments)
+        socket_io_tree:add(socketio_attachments_field,packet.attachments)
     end
     if packet.nsp ~= nil then
-        socket_io_tree:add("nsp:", packet.nsp)
+        socket_io_tree:add(socketio_nsp_field, packet.nsp)
+    else
+        socket_io_tree:add(socketio_nsp_field, SOCKET_IO_NAMESPACE_MAIN)
     end
     if packet.id ~= nil then
-        socket_io_tree:add("id:", packet.id)
+        socket_io_tree:add(socketio_id_field, packet.id)
     end
     if packet.data ~= nil then
-        socket_io_tree:add("data:", packet.data:raw())
+        socket_io_tree:add(socketio_data_field,packet.data, packet.data:raw())
     end
 end
 
@@ -151,40 +152,40 @@ ENGINE_IO_TYPE_MAP[ENGINE_IO_TYPE_BINARY_MESSAGE]="binary message"
 
 
 local function process_engine_io_packet(tree, engine_io_packet,is_binary ,process_payload)
-    local engine_io_tree=tree:add("Engine.IO")
+    local engine_io_tree=tree:add(engineio_field,engine_io_packet)
     if is_binary then
-        engine_io_tree:add("binary message:",engine_io_packet:tohex())
+        engine_io_tree:add(engineio_binary_message_field,engine_io_packet)
         process_payload(tree, engine_io_packet, true)
         return
     end
     local packet = {
-        type = engine_io_packet:subset(0, 1):raw(),
+        type = engine_io_packet:range(0, 1),
     }
     if 1 < engine_io_packet:len() then
-        packet.data=engine_io_packet:subset(
+        packet.data=engine_io_packet:range(
             1,
             engine_io_packet:len() - 1
         )
     end
-    if not ENGINE_IO_TYPE_MAP[packet.type] then
+    if not ENGINE_IO_TYPE_MAP[packet.type:raw()] then
         error("unknown packet type")
     end
-    if packet.type == ENGINE_IO_TYPE_BINARY_MESSAGE then
-        packet.decoded_data = packet.data:base64_decode()
+    if packet.type:raw() == ENGINE_IO_TYPE_BINARY_MESSAGE then
+        packet.decoded_data = packet.data:bytes():base64_decode():tvb("decoded_data"):range()
     end
 
-    engine_io_tree:add("type:",ENGINE_IO_TYPE_MAP[packet.type])
+    engine_io_tree:add(engineio_type_field,packet.type,ENGINE_IO_TYPE_MAP[packet.type:raw()])
     if packet.data ~= nil then
-        engine_io_tree:add("data:",packet.data:raw())
+        engine_io_tree:add(engineio_data_field,packet.data)
     end
     if packet.decoded_data ~= nil then
-        engine_io_tree:add("decoded data:",packet.decoded_data:tohex())
+        engine_io_tree:add(engineio_decoded_data_field,packet.decoded_data)
     end
 
-    if packet.type == ENGINE_IO_TYPE_MESSAGE then
+    if packet.type:raw() == ENGINE_IO_TYPE_MESSAGE then
         process_payload(tree, packet.data, false)
     end
-    if packet.type == ENGINE_IO_TYPE_BINARY_MESSAGE then
+    if packet.type:raw() == ENGINE_IO_TYPE_BINARY_MESSAGE then
         process_payload(tree, packet.decoded_data, true)
     end
     
@@ -203,13 +204,45 @@ websocket = Field.new("websocket")
 field_data_text_lines = Field.new("data-text-lines")
 field_data = Field.new("data")
 
-socketio_proto = Proto("socketio", "Socket.IO and Engine.IO PostDissector")
+socketio_engineio_proto = Proto("socketio_engineio", "Socket.IO and Engine.IO PostDissector")
+
+engineio_field = ProtoField.none("socketio_engineio.engineio","Engine.IO")
+engineio_binary_message_field = ProtoField.bytes("socketio_engineio.engineio.binary_message","binary message")
+engineio_type_field = ProtoField.string("socketio_engineio.engineio.type","type",base.UNICODE)
+engineio_data_field = ProtoField.string("socketio_engineio.engineio.data","data",base.UNICODE)
+engineio_decoded_data_field = ProtoField.bytes("socketio_engineio.engineio.decoded_data","decoded data")
+
+socketio_field = ProtoField.none("socketio_engineio.socketio","Socket.IO")
+socketio_binary_data_field = ProtoField.bytes("socketio_engineio.socketio.binary_data","binary data")
+socketio_type_field = ProtoField.string("socketio_engineio.socketio.type","type",base.UNICODE)
+socketio_attachments_field = ProtoField.string("socketio_engineio.socketio.attachments","attachments",base.UNICODE)
+socketio_nsp_field = ProtoField.string("socketio_engineio.socketio.nsp","nsp",base.UNICODE)
+socketio_id_field = ProtoField.string("socketio_engineio.socketio.id","id",base.UNICODE)
+socketio_data_field = ProtoField.string("socketio_engineio.socketio.data","data",base.UNICODE)
 
 
-function socketio_proto.init()
+socketio_engineio_proto.fields={
+    engineio_field,
+    engineio_binary_message_field,
+    engineio_type_field,
+    engineio_data_field,
+    engineio_decoded_data_field,
+
+    socketio_field,
+    socketio_binary_data_field,
+    socketio_type_field,
+    socketio_attachments_field,
+    socketio_nsp_field,
+    socketio_id_field,
+    socketio_data_field,
+}
+
+
+
+function socketio_engineio_proto.init()
 end
 
-function socketio_proto.dissector(buffer, pinfo, tree)
+function socketio_engineio_proto.dissector(buffer, pinfo, tree)
 
     local http = http()
     local http_request_uri = http_request_uri()
@@ -246,21 +279,24 @@ function socketio_proto.dissector(buffer, pinfo, tree)
 
     local binary_payload
     local text_payload
+    local payload
 
     if field_data() then
-        binary_payload = field_data().value;
+        binary_payload = field_data().value:tvb("binary_payload"):range();
+        payload=binary_payload
     end
     if field_data_text_lines() then
-        text_payload = field_data_text_lines().value
+        text_payload = field_data_text_lines().value:tvb("text_payload"):range()
+        payload=text_payload
     end
 
     if not text_payload and not binary_payload then
         return
     end
-    local proto_tree=tree:add(socketio_proto);
+    local proto_tree=tree:add(socketio_engineio_proto,payload);
     
     if text_payload then
-        local engine_io_packet_list=separate_byte_array(text_payload,ENGINE_IO_PAYLOAD_SEPARATOR);
+        local engine_io_packet_list=separate_tvb_range(text_payload,ENGINE_IO_PAYLOAD_SEPARATOR);
         do
             local i
             for i = 1,#engine_io_packet_list do
@@ -275,4 +311,4 @@ function socketio_proto.dissector(buffer, pinfo, tree)
     end
 end
 
-register_postdissector(socketio_proto)
+register_postdissector(socketio_engineio_proto)
