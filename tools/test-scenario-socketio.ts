@@ -24,12 +24,12 @@ async function mainAsync() {
     });
   });
 
-  for(let transport of ["polling","websocket"]){
-    console.log(`new socket transport: ${transport}`);
+  for(let transports of [["polling"],["websocket"],["polling","websocket"]]){
+    console.log(`new socket transports: ${JSON.stringify(transports)}`);
     const url = `ws://localhost:${PORT}${NSP_CHAT}`;
     const clientSocket = ioc(url, {
       forceNew: true,
-      transports: [transport],
+      transports,
     });
     await new Promise<void>((resolve,reject)=>{
       clientSocket.on("connect",()=>{
