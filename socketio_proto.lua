@@ -12,7 +12,7 @@ local function separate_byte_array(original, separator)
         local i = 0
         local start = 0
         while i < original:len() do
-            if original:get_index(i) == separator then
+            if original:subset(i,1):raw() == separator then
                 result[#result + 1] = original:subset(start, i - start);
                 start = i + 1
             end
@@ -177,7 +177,7 @@ local function process_engine_io_packet(tree, engine_io_packet,is_binary ,proces
         engine_io_tree:add("data:",packet.data:raw())
     end
     if packet.decoded_data ~= nil then
-        engine_io_tree:add("decoded data:",packet.data:hex())
+        engine_io_tree:add("decoded data:",packet.decoded_data:tohex())
     end
 
     if packet.type == ENGINE_IO_TYPE_MESSAGE then
