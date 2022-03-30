@@ -2,15 +2,16 @@
 
 # Wireshark Socket.IO and Engine.IO PostDissector
 
-for Mac<br>
-put `dist/socketio_engineio_proto.lua` in `~/.config/wireshark/plugins`
-
 see also<br>
 https://github.com/socketio/engine.io-protocol/<br>
 https://github.com/socketio/socket.io-protocol/
 
 
 inspired by https://github.com/ksmyth/wireshark-socket.io
+
+## Install
+for Mac<br>
+put `dist/socketio_engineio_proto.lua` in `~/.config/wireshark/plugins`
 
 ## GPL license
 I have chosen the GPL license to use the Wireshark Lua API.
@@ -20,7 +21,7 @@ https://osqa-ask.wireshark.org/questions/12371/wireshark-plugin-and-gpl-license/
 https://wiki.wireshark.org/Lua/
 
 
-## Setup
+## Setup for Developer
 
 ```
 $ npm install
