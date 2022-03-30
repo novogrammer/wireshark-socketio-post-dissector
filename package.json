@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tstl",
+    "dev": "tstl --watch",
     "test-scenario-socketio": "ts-node ./tools/test-scenario-socketio.ts"
   },
   "repository": {
@@ -12,15 +14,18 @@
   },
   "keywords": [],
   "author": "Yusuke Kawamoto <novogrammer@gmail.com> (https://github.com/novogrammer/)",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/novogrammer/wireshark-socketio-post-dissector/issues"
   },
   "homepage": "https://github.com/novogrammer/wireshark-socketio-post-dissector#readme",
   "devDependencies": {
+    "lua-types": "^2.11.0",
     "socket.io": "^4.4.1",
     "socket.io-client": "^4.4.1",
     "ts-node": "^10.5.0",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "typescript-to-lua": "^1.4.2",
+    "wireshark-lua-api-declarations": "github:novogrammer/wireshark-lua-api-declarations"
   }
 }

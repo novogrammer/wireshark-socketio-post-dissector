@@ -3,7 +3,7 @@
 # Wireshark Socket.IO and Engine.IO PostDissector
 
 for Mac<br>
-put `socketio_engineio_proto.lua` in `~/.config/wireshark/plugins`
+put `dist/socketio_engineio_proto.lua` in `~/.config/wireshark/plugins`
 
 see also<br>
 https://github.com/socketio/engine.io-protocol/<br>
