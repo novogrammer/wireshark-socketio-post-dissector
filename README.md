@@ -20,7 +20,12 @@ see `tools/test-scenario-socketio.ts`
 $ npm install
 ```
 
-### Run
+### Transpile Typescript To Lua
+```
+$ npm run build
+```
+
+### Run Test Scenario for Wireshark
 ```
 $ npm run test-scenario-socketio
 ```
