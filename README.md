@@ -12,10 +12,16 @@ https://github.com/socketio/socket.io-protocol/
 
 inspired by https://github.com/ksmyth/wireshark-socket.io
 
-## Run Test Scenario
-see `tools/test-scenario-socketio.ts`
+## GPL license
+I have chosen the GPL license to use the Wireshark Lua API.
 
-### Setup
+see<br>
+https://osqa-ask.wireshark.org/questions/12371/wireshark-plugin-and-gpl-license/<br>
+https://wiki.wireshark.org/Lua/
+
+
+## Setup
+
 ```
 $ npm install
 ```

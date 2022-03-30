@@ -14,7 +14,7 @@
   },
   "keywords": [],
   "author": "Yusuke Kawamoto <novogrammer@gmail.com> (https://github.com/novogrammer/)",
-  "license": "MIT",
+  "license": "GPL",
   "bugs": {
     "url": "https://github.com/novogrammer/wireshark-socketio-post-dissector/issues"
   },
