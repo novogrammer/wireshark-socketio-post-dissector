@@ -6,7 +6,7 @@
     "target": "esnext",
     "lib": ["esnext","dom"],
     "moduleResolution": "node",
-    "types": ["lua-types/5.2","typescript-to-lua/language-extensions","wireshark-lua-api-declarations"],
+    "types": ["lua-types/5.2","@typescript-to-lua/language-extensions","wireshark-lua-api-declarations"],
     "outDir": "./dist",
     "removeComments": false,
     "strict": true

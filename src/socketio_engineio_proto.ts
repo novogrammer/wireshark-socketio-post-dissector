@@ -19,8 +19,9 @@
     return result;
   }
   function is_socket_io_polling_uri(this: void, uri: string): boolean {
-    const [matched] = GRegex.match(uri, "\\/socket\\.io\\/.+transport\\=polling");
-    return !!matched;
+    const [found1]=string.find(uri,"/socket.io/",1,true)
+    const [found2]=string.find(uri,"transport=polling",1,true)
+    return (!!found1) && (!!found2);
   }
   const SOCKET_IO_TYPE_CONNECT = "0"
   const SOCKET_IO_TYPE_DISCONNECT = "1"
@@ -351,9 +352,14 @@
       if (!is_socket_io_polling_uri(info_http_response_for_uri.value as any as string)) {
         // other http response
         return 0;
-      } else if (GRegex.match(info_http_response_line.value as any as string, "Content-Type: text\\/html")) {
-        // skip post response
-        return 0;
+      } else{
+        const s=info_http_response_line.value as any as string;
+        const [found]=string.find(s,"Content-Type: text/html",1,true);
+        if (!!found) {
+          // skip post response
+          return 0;
+        }
+  
       }
 
     }

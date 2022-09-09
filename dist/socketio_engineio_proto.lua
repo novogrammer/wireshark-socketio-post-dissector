@@ -17,8 +17,9 @@ do
         return result
     end
     local function is_socket_io_polling_uri(uri)
-        local matched = GRegex.match(uri, "\\/socket\\.io\\/.+transport\\=polling")
-        return not not matched
+        local found1 = string.find(uri, "/socket.io/", 1, true)
+        local found2 = string.find(uri, "transport=polling", 1, true)
+        return not not found1 and not not found2
     end
     local SOCKET_IO_TYPE_CONNECT = "0"
     local SOCKET_IO_TYPE_DISCONNECT = "1"
@@ -216,7 +217,7 @@ do
     socketio_engineio_proto.fields[#socketio_engineio_proto.fields + 1] = socketio_nsp_field
     socketio_engineio_proto.fields[#socketio_engineio_proto.fields + 1] = socketio_id_field
     socketio_engineio_proto.fields[#socketio_engineio_proto.fields + 1] = socketio_data_field
-    socketio_engineio_proto.init = function(self)
+    socketio_engineio_proto.init = function()
     end
     socketio_engineio_proto.dissector = function(buffer, pinfo, tree)
         local info_http = http()
@@ -238,8 +239,12 @@ do
         if info_http_response_for_uri ~= nil then
             if not is_socket_io_polling_uri(info_http_response_for_uri.value) then
                 return 0
-            elseif {GRegex.match(info_http_response_line.value, "Content-Type: text\\/html")} then
-                return 0
+            else
+                local s = info_http_response_line.value
+                local found = string.find(s, "Content-Type: text/html", 1, true)
+                if not not found then
+                    return 0
+                end
             end
         end
         local binary_payload = nil
