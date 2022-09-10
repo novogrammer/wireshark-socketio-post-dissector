@@ -134,7 +134,7 @@ do
             )
         end
     end
-    local ENGINE_IO_PAYLOAD_SEPARATOR = ""
+    local ENGINE_IO_PAYLOAD_SEPARATOR = string.char(30)
     local ENGINE_IO_TYPE_OPEN = "0"
     local ENGINE_IO_TYPE_CLOSE = "1"
     local ENGINE_IO_TYPE_PING = "2"

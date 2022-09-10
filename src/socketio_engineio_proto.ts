@@ -167,7 +167,7 @@
   }
 
 
-  const ENGINE_IO_PAYLOAD_SEPARATOR = "\x1e"
+  const ENGINE_IO_PAYLOAD_SEPARATOR = String.fromCharCode(0x1e);
   const ENGINE_IO_TYPE_OPEN = "0"
   const ENGINE_IO_TYPE_CLOSE = "1"
   const ENGINE_IO_TYPE_PING = "2"
